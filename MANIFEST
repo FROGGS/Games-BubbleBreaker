@@ -1,0 +1,16 @@
+bin/bubble-breaker.pl
+Build.PL
+CHANGELOG
+lib/Games/Puzzle/BubbleBreaker.pm
+MANIFEST			This list of files
+META.json
+META.yml
+README
+share/background.png
+share/blue.png
+share/green.png
+share/pink.png
+share/red.png
+share/yellow.png
+t/00-run.t
+TODO

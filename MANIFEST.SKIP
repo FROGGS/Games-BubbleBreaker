@@ -1,0 +1,1 @@
+^(?!bin|lib/[\/\w]+\.p(m|od)$|share/\w+\.png$|t/[\/\w-]+\.t$|Build.PL$|INSTALL$|README$|MANIFEST$|CHANGELOG$|TODO$|CONTRIBUTORS$|COPYING$|META.yml$|META.json$)

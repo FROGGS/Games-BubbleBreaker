@@ -1,1 +1,11 @@
-Done as third submission to the game contest.
+NAME
+    Games::Puzzle::BubbleBreaker - a mouse based logic game
+
+INSTALLATION
+        perl Build.PL
+        ./Build
+        ./Build test
+        sudo ./Build install
+
+    After that type the following to run the game: bubble-breaker
+

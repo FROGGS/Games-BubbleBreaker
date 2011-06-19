@@ -3,10 +3,12 @@
 use strict;
 use warnings;
 
-use Data::Dumper;
 use Time::HiRes;
+use File::ShareDir qw(dist_dir);
+use File::Spec::Functions qw(splitpath catpath catdir catfile);
 
 use SDL;
+use SDL::Event;
 use SDL::Events;
 use SDL::Mouse;
 use SDL::Video;
@@ -15,6 +17,21 @@ use SDL::Surface;
 use SDLx::App;
 use SDLx::Surface;
 use SDLx::Text;
+
+print STDOUT <<OUT;
+**************************** Information **********************************
+Click on a bubble to select all contiguous buubles of same color and double
+click to destroy them. The more bubbles you destroy at once the more points
+you get.
+
+To quit press ESC.
+
+Have fun!
+***************************************************************************
+OUT
+
+my $videodriver = $ENV{SDL_VIDEODRIVER};
+$ENV{SDL_VIDEODRIVER} = 'dummy' if $ENV{'BUBBLEBREAKER_TEST'};
 
 # initializing video and retrieving current video resolution
 SDL::init(SDL_INIT_VIDEO);
@@ -31,23 +48,43 @@ my $label                = SDLx::Text->new( color => [ 0x15, 0x3C, 0x99 ], size 
 
 
 # ingame states
-my $points     = 0;
-my @controls   = ();
-my %balls      = ();
-my $neighbours = {};
-my @highscore  = ();
+my $points      = 0;
+my @controls    = ();
+my %balls       = ();
+my $neighbours  = {};
+my @highscore   = ();
+my $HOME        = "$ENV{HOME}/.bubble-breaker";
+mkdir($HOME) unless -d $HOME;
+my ($v, $p, $f) = splitpath(__FILE__);
+my $SHARE       = -e catpath($v, catdir($p, '..', 'share'), 'background.png')
+                ? catpath($v, catdir($p, '..', 'share'))
+                : dist_dir('Games-Puzzle-BubbleBreaker');
 
 # images
-my $background = SDLx::Surface->load('background.png');
+my $background = SDLx::Surface->load( catfile($SHARE, 'background.png') );
 my @balls      = (
-    SDLx::Surface->load( 'red.png' ),
-    SDLx::Surface->load( 'green.png' ),
-    SDLx::Surface->load( 'yellow.png' ),
-    SDLx::Surface->load( 'pink.png' ),
-    SDLx::Surface->load( 'blue.png' )
+    SDLx::Surface->load( catfile($SHARE, 'red.png') ),
+    SDLx::Surface->load( catfile($SHARE, 'green.png') ),
+    SDLx::Surface->load( catfile($SHARE, 'yellow.png') ),
+    SDLx::Surface->load( catfile($SHARE, 'pink.png') ),
+    SDLx::Surface->load( catfile($SHARE, 'blue.png') )
 );
 
 new_round();
+
+if($ENV{'BUBBLEBREAKER_TEST'}) {
+    $app->add_show_handler(  sub {
+        if(SDL::get_ticks > 1000) {
+            my $esc_event = SDL::Event->new();
+            $esc_event->type(SDL_KEYDOWN);
+            $esc_event->key_sym(SDLK_ESCAPE);
+            SDL::Events::push_event($esc_event);
+        }
+        elsif(SDL::get_ticks > 3000) {
+            $app->stop;
+        }
+    } );
+}
 
 $app->add_show_handler(  sub { $app->update } );
 $app->add_event_handler( sub {
@@ -137,12 +174,12 @@ sub new_round {
 
 sub draw_highscore {
     unless( scalar @highscore ) {
-        if(!-e 'highscore.dat' && open(FH, '>highscore.dat')) {
+        if(!-e "$HOME/highscore.dat" && open(FH, ">$HOME/highscore.dat")) {
             print(FH "42\n");
             close(FH);
         }
         
-        if(open(FH, '<highscore.dat')) {
+        if(open(FH, "<$HOME/highscore.dat")) {
             @highscore = map{/(\d+)/; $1} <FH>;
             close(FH);
         }
@@ -160,7 +197,7 @@ sub draw_highscore {
         $label->color([0x15, 0x3C, 0x99]);
     }
 
-    if(open(FH, '>highscore.dat')) {
+    if(open(FH, ">$HOME/highscore.dat")) {
         print(FH "$_\n") for @score;
         close(FH);
     }
@@ -282,4 +319,10 @@ sub neighbours {
         $n->{$x + 1}->{$y} = 1;
         neighbours($x + 1, $y, $n);
     }
+}
+
+if ($videodriver) {
+	$ENV{SDL_VIDEODRIVER} = $videodriver;
+} else {
+	delete $ENV{SDL_VIDEODRIVER};
 }

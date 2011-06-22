@@ -1,7 +1,7 @@
 bin/bubble-breaker.pl
 Build.PL
 CHANGELOG
-lib/Games/Puzzle/BubbleBreaker.pm
+lib/Games/BubbleBreaker.pm
 MANIFEST			This list of files
 META.json
 META.yml

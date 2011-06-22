@@ -12,7 +12,7 @@
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
       "version" : "2"
    },
-   "name" : "Games-Puzzle-BubbleBreaker",
+   "name" : "Games-BubbleBreaker",
    "prereqs" : {
       "configure" : {
          "requires" : {
@@ -29,8 +29,8 @@
       }
    },
    "provides" : {
-      "Games::Puzzle::BubbleBreaker" : {
-         "file" : "lib/Games/Puzzle/BubbleBreaker.pm",
+      "Games::BubbleBreaker" : {
+         "file" : "lib/Games/BubbleBreaker.pm",
          "version" : "0.01"
       }
    },

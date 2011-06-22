@@ -48,7 +48,7 @@ mkdir($HOME) unless -d $HOME;
 my ($v, $p, $f)          = splitpath(__FILE__);
 my $SHARE                = -e catpath($v, catdir($p, '..', 'share'), 'background.png')
                          ? catpath($v, catdir($p, '..', 'share'))
-                         : dist_dir('Games-Puzzle-BubbleBreaker');
+                         : dist_dir('Games-BubbleBreaker');
 my $last_click           = Time::HiRes::time;
 my $sfont_white          = SDLx::SFont->new( catfile($SHARE, 'font_white.png') );
 my $sfont_blue           = SDLx::SFont->new( catfile($SHARE, 'font_blue.png') );

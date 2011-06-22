@@ -1,5 +1,5 @@
 NAME
-    Games::Puzzle::BubbleBreaker - a mouse based logic game
+    Games::BubbleBreaker - a mouse based logic game
 
 INSTALLATION
         perl Build.PL

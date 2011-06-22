@@ -11,10 +11,10 @@ license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
-name: Games-Puzzle-BubbleBreaker
+name: Games-BubbleBreaker
 provides:
-  Games::Puzzle::BubbleBreaker:
-    file: lib/Games/Puzzle/BubbleBreaker.pm
+  Games::BubbleBreaker:
+    file: lib/Games/BubbleBreaker.pm
     version: 0.01
 requires:
   File::ShareDir: 1.00

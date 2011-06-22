@@ -1,4 +1,4 @@
-package Games::Puzzle::BubbleBreaker;
+package Games::BubbleBreaker;
 
 our $VERSION = '0.01';
 
@@ -10,7 +10,7 @@ __END__
 
 =head1 NAME
 
-Games::Puzzle::BubbleBreaker - a mouse based logic game
+Games::BubbleBreaker - a mouse based logic game
 
 =head1 INSTALLATION
 

@@ -3,8 +3,8 @@ use warnings;
 use Module::Build;
 
 my $build = Module::Build->new(
-  module_name          => 'Games::Puzzle::BubbleBreaker',
-  all_from             => 'lib/Games/Puzzle/BubbleBreaker.pm',
+  module_name          => 'Games::BubbleBreaker',
+  all_from             => 'lib/Games/BubbleBreaker.pm',
   dist_author          => 'Tobias Leich <froggs@cpan.org>',
   license              => 'perl',
   requires             => {

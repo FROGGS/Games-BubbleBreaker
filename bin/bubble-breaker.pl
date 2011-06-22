@@ -16,7 +16,7 @@ use SDL::VideoInfo;
 use SDL::Surface;
 use SDLx::App;
 use SDLx::Surface;
-use SDLx::Text;
+use SDLx::SFont;
 
 print STDOUT <<OUT;
 **************************** Information **********************************
@@ -43,9 +43,15 @@ my $app                  = SDLx::App->new( width => 800, height => 352,
                                            depth => 32, title => "BubbleBreaker", color => 0x000000FF,
                                            flags => SDL_SWSURFACE|SDL_DOUBLEBUF|SDL_NOFRAME,
                                            init => 0, eoq => 1, delay => 20 );
+my $HOME                 = "$ENV{HOME}/.bubble-breaker";
+mkdir($HOME) unless -d $HOME;
+my ($v, $p, $f)          = splitpath(__FILE__);
+my $SHARE                = -e catpath($v, catdir($p, '..', 'share'), 'background.png')
+                         ? catpath($v, catdir($p, '..', 'share'))
+                         : dist_dir('Games-Puzzle-BubbleBreaker');
 my $last_click           = Time::HiRes::time;
-my $label                = SDLx::Text->new( color => [ 0x15, 0x3C, 0x99 ], size => 30, h_align => 'right' );
-
+my $sfont_white          = SDLx::SFont->new( catfile($SHARE, 'font_white.png') );
+my $sfont_blue           = SDLx::SFont->new( catfile($SHARE, 'font_blue.png') );
 
 # ingame states
 my $points      = 0;
@@ -53,12 +59,6 @@ my @controls    = ();
 my %balls       = ();
 my $neighbours  = {};
 my @highscore   = ();
-my $HOME        = "$ENV{HOME}/.bubble-breaker";
-mkdir($HOME) unless -d $HOME;
-my ($v, $p, $f) = splitpath(__FILE__);
-my $SHARE       = -e catpath($v, catdir($p, '..', 'share'), 'background.png')
-                ? catpath($v, catdir($p, '..', 'share'))
-                : dist_dir('Games-Puzzle-BubbleBreaker');
 
 # images
 my $background = SDLx::Surface->load( catfile($SHARE, 'background.png') );
@@ -111,7 +111,7 @@ $app->add_event_handler( sub {
                             }
                         }
                     }
-                    $label->write_xy($app, 250, 160, $points);
+                    SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
                     draw_highscore();
                     
                     last;
@@ -131,7 +131,7 @@ $app->add_event_handler( sub {
                     }
                 }
             }
-            $label->write_xy($app, 250, 160, $points);
+            SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
             draw_highscore();
             
             for(@controls) {
@@ -159,7 +159,7 @@ sub new_round {
     @highscore  = ();
 
     $background->blit( $app );
-    $label->write_xy($app, 250, 160, $points);
+    SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
     draw_highscore();
 
     for my $x (0..14) {
@@ -190,11 +190,11 @@ sub draw_highscore {
     my $points_drawn = 0;
     while($line < 10 && $score[$line]) {
         if($score[$line] == $points && !$points_drawn) {
-            $label->color([0xFF, 0xFF, 0xFF]);
+            $sfont_white->use;
             $points_drawn = 1;
         }
-        $label->write_xy($app, 780, 60 + 25 * $line, $score[$line++]);
-        $label->color([0x15, 0x3C, 0x99]);
+        SDLx::SFont::print_text($app, 780 - SDLx::SFont::SDL_TEXTWIDTH( $score[$line] ), 60 + 25 * $line, $score[$line++] );
+        $sfont_blue->use;
     }
 
     if(open(FH, ">$HOME/highscore.dat")) {
@@ -322,7 +322,7 @@ sub neighbours {
 }
 
 if ($videodriver) {
-	$ENV{SDL_VIDEODRIVER} = $videodriver;
+    $ENV{SDL_VIDEODRIVER} = $videodriver;
 } else {
-	delete $ENV{SDL_VIDEODRIVER};
+    delete $ENV{SDL_VIDEODRIVER};
 }

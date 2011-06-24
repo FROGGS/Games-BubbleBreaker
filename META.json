@@ -14,6 +14,11 @@
    },
    "name" : "Games-BubbleBreaker",
    "prereqs" : {
+      "build" : {
+         "requires" : {
+            "Capture::Tiny" : 0
+         }
+      },
       "configure" : {
          "requires" : {
             "Module::Build" : "0.38"
@@ -31,7 +36,7 @@
    "provides" : {
       "Games::BubbleBreaker" : {
          "file" : "lib/Games/BubbleBreaker.pm",
-         "version" : "0.01"
+         "version" : "0.02"
       }
    },
    "release_status" : "stable",
@@ -43,5 +48,5 @@
          "url" : "http://github.com/FROGGS/Games-BubbleBreaker"
       }
    },
-   "version" : "0.01"
+   "version" : "0.02"
 }

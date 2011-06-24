@@ -2,7 +2,8 @@
 abstract: 'a mouse based logic game'
 author:
   - 'Tobias Leich <froggs@cpan.org>'
-build_requires: {}
+build_requires:
+  Capture::Tiny: 0
 configure_requires:
   Module::Build: 0.38
 dynamic_config: 1
@@ -15,7 +16,7 @@ name: Games-BubbleBreaker
 provides:
   Games::BubbleBreaker:
     file: lib/Games/BubbleBreaker.pm
-    version: 0.01
+    version: 0.02
 requires:
   File::ShareDir: 1.00
   File::Spec: 0
@@ -24,4 +25,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: http://github.com/FROGGS/Games-BubbleBreaker
-version: 0.01
+version: 0.02

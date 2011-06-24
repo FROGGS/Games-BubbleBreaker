@@ -13,6 +13,9 @@ my $build = Module::Build->new(
     'Time::HiRes'      => '0',
     'SDL'              => '2.532',
   },
+  build_requires => {
+    'Capture::Tiny'     => '0',
+  },
   configure_requires   => {
     'Module::Build'    => '0.38',
   },

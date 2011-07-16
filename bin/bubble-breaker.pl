@@ -4,8 +4,6 @@ use strict;
 use warnings;
 
 use Time::HiRes;
-use File::ShareDir qw(dist_dir);
-use File::Spec::Functions qw(splitpath catpath catdir catfile);
 
 use SDL;
 use SDL::Event;
@@ -13,6 +11,7 @@ use SDL::Events;
 use SDL::Mouse;
 use SDL::Video;
 use SDL::VideoInfo;
+use SDL::RWOps;
 use SDL::Surface;
 use SDLx::App;
 use SDLx::Surface;
@@ -20,7 +19,7 @@ use SDLx::SFont;
 
 print STDOUT <<OUT;
 **************************** Information **********************************
-Click on a bubble to select all contiguous buubles of same color and double
+Click on a bubble to select all contiguous bubbles of same color and double
 click to destroy them. The more bubbles you destroy at once the more points
 you get.
 
@@ -30,9 +29,6 @@ Have fun!
 ***************************************************************************
 OUT
 
-my $videodriver = $ENV{SDL_VIDEODRIVER};
-$ENV{SDL_VIDEODRIVER} = 'dummy' if $ENV{'BUBBLEBREAKER_TEST'};
-
 # initializing video and retrieving current video resolution
 SDL::init(SDL_INIT_VIDEO);
 my $video_info           = SDL::Video::get_video_info();
@@ -41,19 +37,13 @@ my $screen_h             = $video_info->current_h;
 $ENV{SDL_VIDEO_CENTERED} = 'center';
 my $app                  = SDLx::App->new( width => 800, height => 352,
                                            depth => 32, title => "BubbleBreaker", color => 0x000000FF,
-                                           flags => SDL_SWSURFACE|SDL_DOUBLEBUF|SDL_NOFRAME,
+                                           flags => SDL_SWSURFACE,
                                            init => 0, eoq => 1, delay => 20 );
-my $HOME                 = $^O eq 'MSWin32'
-                         ? catpath($ENV{HOMEDRIVE}, catdir($ENV{HOMEPATH}, '.bubble-breaker'))
-                         : "$ENV{HOME}/.bubble-breaker";
+my $HOME                 = "$ENV{HOME}/.bubble-breaker";
 mkdir($HOME) unless -d $HOME;
-my ($v, $p, $f)          = splitpath(__FILE__);
-my $SHARE                = -e catpath($v, catdir($p, '..', 'share'), 'background.png')
-                         ? catpath($v, catdir($p, '..', 'share'))
-                         : dist_dir('Games-BubbleBreaker');
 my $last_click           = Time::HiRes::time;
-my $sfont_white          = SDLx::SFont->new( catfile($SHARE, 'font_white.png') );
-my $sfont_blue           = SDLx::SFont->new( catfile($SHARE, 'font_blue.png') );
+my $sfont_white          = undef;#SDLx::SFont->new( catfile($SHARE, 'font_white.png') );
+my $sfont_blue           = undef;#SDLx::SFont->new( catfile($SHARE, 'font_blue.png') );
 
 # ingame states
 my $points      = 0;
@@ -63,39 +53,31 @@ my $neighbours  = {};
 my @highscore   = ();
 
 # images
-my $background = SDLx::Surface->load( catfile($SHARE, 'background.png') );
+my $background = static::find('share/background.png');
+   $background = SDLx::Surface->new( surface => SDL::Image::load_PNG_rw( SDL::RWOps->new_const_mem( $background, length $background ) ) );
+my $red        = static::find('share/red.png');
+my $green      = static::find('share/green.png');
+my $yellow     = static::find('share/yellow.png');
+my $pink       = static::find('share/pink.png');
+my $blue       = static::find('share/blue.png');
 my @balls      = (
-    SDLx::Surface->load( catfile($SHARE, 'red.png') ),
-    SDLx::Surface->load( catfile($SHARE, 'green.png') ),
-    SDLx::Surface->load( catfile($SHARE, 'yellow.png') ),
-    SDLx::Surface->load( catfile($SHARE, 'pink.png') ),
-    SDLx::Surface->load( catfile($SHARE, 'blue.png') )
+    SDLx::Surface->new( surface => SDL::Image::load_PNG_rw( SDL::RWOps->new_const_mem( $red,    length $red ) ) ),
+    SDLx::Surface->new( surface => SDL::Image::load_PNG_rw( SDL::RWOps->new_const_mem( $green,  length $green ) ) ),
+    SDLx::Surface->new( surface => SDL::Image::load_PNG_rw( SDL::RWOps->new_const_mem( $yellow, length $yellow ) ) ),
+    SDLx::Surface->new( surface => SDL::Image::load_PNG_rw( SDL::RWOps->new_const_mem( $pink,   length $pink ) ) ),
+    SDLx::Surface->new( surface => SDL::Image::load_PNG_rw( SDL::RWOps->new_const_mem( $blue,   length $blue ) ) )
 );
 
 new_round();
 
-if($ENV{'BUBBLEBREAKER_TEST'}) {
-    $app->add_show_handler(  sub {
-        if(SDL::get_ticks > 1000) {
-            my $esc_event = SDL::Event->new();
-            $esc_event->type(SDL_KEYDOWN);
-            $esc_event->key_sym(SDLK_ESCAPE);
-            SDL::Events::push_event($esc_event);
-        }
-        elsif(SDL::get_ticks > 3000) {
-            $app->stop;
-        }
-    } );
-}
-
 $app->add_show_handler(  sub { $app->update } );
 $app->add_event_handler( sub {
     my $e = shift;
-    
+
     if($e->type == SDL_KEYDOWN && $e->key_sym == SDLK_ESCAPE) {
         $app->stop;
     }
-    
+
     elsif ($e->type == SDL_MOUSEBUTTONDOWN && $e->button_button == SDL_BUTTON_LEFT) {
         my $time = Time::HiRes::time;
         if ($time - $last_click < 0.3) {
@@ -104,7 +86,7 @@ $app->add_event_handler( sub {
                 && $_->[1] < $e->button_y && $e->button_y < $_->[3]) {
                     remove_selection($neighbours);
                     $neighbours = {};
-                    
+
                     $background->blit( $app );
                     for my $x (0..14) {
                         for my $y (0..11) {
@@ -113,9 +95,9 @@ $app->add_event_handler( sub {
                             }
                         }
                     }
-                    SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
+                    #SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
                     draw_highscore();
-                    
+
                     last;
                 }
             }
@@ -133,9 +115,9 @@ $app->add_event_handler( sub {
                     }
                 }
             }
-            SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
+            #SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
             draw_highscore();
-            
+
             for(@controls) {
                 if($_->[0] < $e->button_x && $e->button_x < $_->[2]
                 && $_->[1] < $e->button_y && $e->button_y < $_->[3]
@@ -161,7 +143,7 @@ sub new_round {
     @highscore  = ();
 
     $background->blit( $app );
-    SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
+    #SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
     draw_highscore();
 
     for my $x (0..14) {
@@ -180,23 +162,24 @@ sub draw_highscore {
             print(FH "42\n");
             close(FH);
         }
-        
+
         if(open(FH, "<$HOME/highscore.dat")) {
             @highscore = map{/(\d+)/; $1} <FH>;
             close(FH);
         }
     }
-    
+
     my $line         = 0;
     my @score        = reverse sort {$a <=> $b} (@highscore, $points);
     my $points_drawn = 0;
     while($line < 10 && $score[$line]) {
         if($score[$line] == $points && !$points_drawn) {
-            $sfont_white->use;
+            #$sfont_white->use;
             $points_drawn = 1;
         }
-        SDLx::SFont::print_text($app, 780 - SDLx::SFont::SDL_TEXTWIDTH( $score[$line] ), 60 + 25 * $line, $score[$line++] );
-        $sfont_blue->use;
+        #SDLx::SFont::print_text($app, 780 - SDLx::SFont::SDL_TEXTWIDTH( $score[$line] ), 60 + 25 * $line, $score[$line] );
+        $line++;
+        #$sfont_blue->use;
     }
 
     if(open(FH, ">$HOME/highscore.dat")) {
@@ -207,7 +190,7 @@ sub draw_highscore {
 
 sub remove_selection {
     my $n = shift;
-    
+
     my $count = 0;
     for my $x (keys %$n) {
         for my $y (keys %{$n->{$x}}) {
@@ -215,11 +198,11 @@ sub remove_selection {
             $count++;
         }
     }
-    
+
     return unless $count > 1;
-    
+
     $points += int(5 * $count + 1.5**$count);
-    
+
     for my $x (0..14) {
         for my $y (0..11) {
             $y = 11 - $y;
@@ -228,13 +211,13 @@ sub remove_selection {
                 while(!defined $balls{$x}{$above} && $above > 0) {
                     $above--;
                 }
-                
+
                 $balls{$x}{$y}     = $balls{$x}{$above};
                 $balls{$x}{$above} = undef;
             }
         }
     }
-    
+
     for my $x (0..7) {
         $x = 7 - $x;
         my $y = 11;
@@ -243,7 +226,7 @@ sub remove_selection {
             while(!defined $balls{$left}{11} && $left > 0) {
                 $left--;
             }
-            
+
             for $y (0..11) {
                 $y = 11 - $y;
                 $balls{$x}{$y}    = $balls{$left}{$y};
@@ -251,7 +234,7 @@ sub remove_selection {
             }
         }
     }
-    
+
     for my $x (7..14) {
         my $y = 11;
         unless( defined $balls{$x}{11} ) {
@@ -259,7 +242,7 @@ sub remove_selection {
             while(!defined $balls{$right}{11} && $right < 14) {
                 $right++;
             }
-            
+
             for $y (0..11) {
                 $y = 11 - $y;
                 $balls{$x}{$y}     = $balls{$right}{$y};
@@ -272,7 +255,7 @@ sub remove_selection {
 sub draw_shape {
     my $n     = shift;
     my %lines = ();
-    
+
     for my $x (keys %$n) {
         for my $y (keys %{$n->{$x}}) {
             $lines{278 + $x * 25}{28 + $y * 25}{303 + $x * 25}{28 + $y * 25}++;
@@ -281,7 +264,7 @@ sub draw_shape {
             $lines{303 + $x * 25}{28 + $y * 25}{303 + $x * 25}{53 + $y * 25}++;
         }
     }
-    
+
     for my $x1 (keys %lines) {
         for my $y1 (keys %{$lines{$x1}}) {
             for my $x2 (keys %{$lines{$x1}{$y1}}) {
@@ -297,7 +280,7 @@ sub draw_shape {
 
 sub neighbours {
     my ($x, $y, $n) = @_;
-    
+
     if(defined $balls{$x}{$y - 1} && $balls{$x}{$y - 1} == $balls{$x}{$y} && !$n->{$x}->{$y - 1}) {
         $n->{$x}->{$y}     = 1;
         $n->{$x}->{$y - 1} = 1;
@@ -323,8 +306,4 @@ sub neighbours {
     }
 }
 
-if ($videodriver) {
-    $ENV{SDL_VIDEODRIVER} = $videodriver;
-} else {
-    delete $ENV{SDL_VIDEODRIVER};
-}
+exit 0;

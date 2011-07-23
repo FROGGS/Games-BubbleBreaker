@@ -29,21 +29,18 @@ Have fun!
 ***************************************************************************
 OUT
 
-# initializing video and retrieving current video resolution
-SDL::init(SDL_INIT_VIDEO);
-my $video_info           = SDL::Video::get_video_info();
-my $screen_w             = $video_info->current_w;
-my $screen_h             = $video_info->current_h;
 $ENV{SDL_VIDEO_CENTERED} = 'center';
 my $app                  = SDLx::App->new( width => 800, height => 352,
                                            depth => 32, title => "BubbleBreaker", color => 0x000000FF,
                                            flags => SDL_SWSURFACE,
-                                           init => 0, eoq => 1, delay => 20 );
+                                           eoq => 1, delay => 20 );
 my $HOME                 = "$ENV{HOME}/.bubble-breaker";
 mkdir($HOME) unless -d $HOME;
 my $last_click           = Time::HiRes::time;
-my $sfont_white          = undef;#SDLx::SFont->new( catfile($SHARE, 'font_white.png') );
-my $sfont_blue           = undef;#SDLx::SFont->new( catfile($SHARE, 'font_blue.png') );
+my $font_white           = static::find('share/font_white.png');
+my $font_blue            = static::find('share/font_blue.png');
+my $sfont_white          = SDLx::SFont->new( SDL::RWOps->new_const_mem( $font_white, length $font_white) );
+my $sfont_blue           = SDLx::SFont->new( SDL::RWOps->new_const_mem( $font_blue,  length $font_blue) );
 
 # ingame states
 my $points      = 0;
@@ -95,7 +92,7 @@ $app->add_event_handler( sub {
                             }
                         }
                     }
-                    #SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
+                    SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
                     draw_highscore();
 
                     last;
@@ -115,7 +112,7 @@ $app->add_event_handler( sub {
                     }
                 }
             }
-            #SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
+            SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
             draw_highscore();
 
             for(@controls) {
@@ -143,7 +140,7 @@ sub new_round {
     @highscore  = ();
 
     $background->blit( $app );
-    #SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
+    SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
     draw_highscore();
 
     for my $x (0..14) {
@@ -174,12 +171,11 @@ sub draw_highscore {
     my $points_drawn = 0;
     while($line < 10 && $score[$line]) {
         if($score[$line] == $points && !$points_drawn) {
-            #$sfont_white->use;
+            $sfont_white->use;
             $points_drawn = 1;
         }
-        #SDLx::SFont::print_text($app, 780 - SDLx::SFont::SDL_TEXTWIDTH( $score[$line] ), 60 + 25 * $line, $score[$line] );
-        $line++;
-        #$sfont_blue->use;
+        SDLx::SFont::print_text($app, 780 - SDLx::SFont::SDL_TEXTWIDTH( $score[$line] ), 60 + 25 * $line, $score[$line++] );
+        $sfont_blue->use;
     }
 
     if(open(FH, ">$HOME/highscore.dat")) {

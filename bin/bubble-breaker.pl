@@ -1,9 +1,5 @@
 #!perl6
 
-#use File::ShareDir qw(dist_dir);
-#use File::Spec::Functions qw(splitpath catpath catdir catfile);
-
-use lib '../SDL6/lib';
 use SDL;
 #use SDL::Event;
 #use SDL::Events;

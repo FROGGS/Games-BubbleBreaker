@@ -13,7 +13,7 @@ use SDL::Video;
 use SDL::Surface;
 use SDL::App;
 #use SDLx::Surface;
-#use SDLx::SFont;
+use SDL::SFont;
 
 say "
 **************************** Information **********************************
@@ -25,7 +25,7 @@ To quit press ESC.
 
 Have fun!
 ***************************************************************************
-" if 0;
+";
 
 my $videodriver          = %*ENV{'SDL_VIDEODRIVER'};
 %*ENV{'SDL_VIDEODRIVER'} = 'dummy' if %*ENV{'BUBBLEBREAKER_TEST'};
@@ -33,29 +33,20 @@ my $videodriver          = %*ENV{'SDL_VIDEODRIVER'};
 # initializing video and retrieving current video resolution
 SDL::init( 32 );
 %*ENV{'SDL_VIDEO_CENTERED'} = 'center';
-#my $app                   = SDL::App.new( 800, 352, 32, 1073741856 );
-my $app                   = SDL::App.new( 800, 352, 32, 0 );
-#$app.get_clip_rect;
-#$app.set_pixel( 20, 10 );
-#$app.update;
-#sleep(3);
-
-#my $app                   = SDLx::App->new( width => 800, height => 352,
-#                                            depth => 32,  title  => "BubbleBreaker", color => 0x000000FF,
-#                                            init  => 0,   eoq    => 1,               delay => 20,
-#                                            flags => SDL_SWSURFACE +| SDL_DOUBLEBUF +| SDL_NOFRAME );
-#my $HOME                 = $*OS ~~ 'MSWin32'
-#                         ? catpath(%*ENV{HOMEDRIVE}, catdir(%*ENV{HOMEPATH}, '.bubble-breaker'))
-#                         : "%*ENV{HOME}/.bubble-breaker";
-#mkdir($HOME) unless -d $HOME;
-#my ($v, $p, $f)          = splitpath(__FILE__);
-my $SHARE                 = 'share';
-#my $SHARE                = -e catpath($v, catdir($p, '..', 'share'), 'background.png')
-#                         ? catpath($v, catdir($p, '..', 'share'))
-#                         : dist_dir('Games-BubbleBreaker');
-my $last_click           = now;
-#my $sfont_white          = SDLx::SFont->new( catfile($SHARE, 'font_white.png') );
-#my $sfont_blue           = SDLx::SFont->new( catfile($SHARE, 'font_blue.png') );
+#my $app                    = SDL::App.new( 800, 352, 32, 1073741856 );
+my $app                     = SDL::App.new( 800, 352, 32, 0 );
+#my $app                    = SDLx::App->new( width => 800, height => 352,
+#                                             depth => 32,  title  => "BubbleBreaker", color => 0x000000FF,
+#                                             init  => 0,   eoq    => 1,               delay => 20,
+#                                             flags => SDL_SWSURFACE +| SDL_DOUBLEBUF +| SDL_NOFRAME );
+my $HOME                    = $*OS ~~ 'MSWin32'
+                            ?? %*ENV{'HOMEDRIVE'} ~ '/' ~ %*ENV{'HOMEPATH'} ~ '/.bubble-breaker'
+                            !! "%*ENV{'HOME'}/.bubble-breaker";
+my $SHARE                   = 'share';
+my $last_click              = now;
+my $sfont_white             = SDL::SFont.new( "$SHARE/font_white.png" );
+my $sfont_blue              = SDL::SFont.new( "$SHARE/font_blue.png" );
+mkdir($HOME) unless $HOME.IO.d;
 
 # ingame states
 my $points      = 0;
@@ -67,15 +58,16 @@ my @highscore   = ();
 # images
 my $background = SDL::Surface.new( "$SHARE/background.png" );
 my @balls      = (
-    SDL::Surface.new( "$SHARE/red.png" ),
-    SDL::Surface.new( "$SHARE/green.png" ),
-    SDL::Surface.new( "$SHARE/yellow.png" ),
-    SDL::Surface.new( "$SHARE/pink.png" ),
-    SDL::Surface.new( "$SHARE/blue.png" )
+	SDL::Surface.new( "$SHARE/red.png" ),
+	SDL::Surface.new( "$SHARE/green.png" ),
+	SDL::Surface.new( "$SHARE/yellow.png" ),
+	SDL::Surface.new( "$SHARE/pink.png" ),
+	SDL::Surface.new( "$SHARE/blue.png" )
 );
 
 new_round();
 
+# TODO push_event
 #if(%*ENV{'BUBBLEBREAKER_TEST'}) {
 #    $app->add_show_handler(  sub {
 #        if(SDL::get_ticks > 1000) {
@@ -90,7 +82,7 @@ new_round();
 #    } );
 #}
 
-$app.add_show_handler( sub { $app.update; SDL::delay(20) } );
+$app.add_show_handler( sub { $app.update } );
 
 # main event loop
 $app.add_event_handler( sub ( $e ) {
@@ -139,8 +131,8 @@ $app.add_event_handler( sub ( $e ) {
 			new_round();
 		}
 		$last_click = $time;
-#            SDLx::SFont::print_text($app, 250 - SDLx::SFont::SDL_TEXTWIDTH( $points ), 160, $points );
-#            draw_highscore();
+		$sfont_blue.blit_text( $app, 250 - $sfont_white.text_width( $points ), 160, $points );
+		draw_highscore();
 	}
 } );
 
@@ -154,47 +146,46 @@ sub new_round {
 	@highscore  = ();
 
 	$background.blit( $app );
+	draw_highscore();
 
 	for 0..14 -> $x {
 		for 0..11 -> $y {
-			my $color = 5.rand.Int;
+			my $color      = 5.rand.Int;
+			%balls{$x}{$y} = $color;
 			@balls[$color].blit( $app, SDL::Rect, SDL::Rect.new( 280 + $x * 25, 30 + $y * 25, 0, 0 ) );
 			@controls.push: [ 278 + $x * 25, 28 + $y * 25, 303 + $x * 25, 53 + $y * 25, $x, $y ];
-			%balls{$x}{$y} = $color;
 		}
 	}
 }
 
-#sub draw_highscore {
-#    unless( scalar @highscore ) {
-#        if(!-e "$HOME/highscore.dat" && open(FH, ">$HOME/highscore.dat")) {
-#            print(FH "42\n");
-#            close(FH);
-#        }
-#        
-#        if(open(FH, "<$HOME/highscore.dat")) {
-#            @highscore = map{/(\d+)/; $1} <FH>;
-#            close(FH);
-#        }
-#    }
-#    
-#    my $line         = 0;
-#    my @score        = reverse sort {$a <=> $b} (@highscore, $points);
-#    my $points_drawn = 0;
-#    while($line < 10 && $score[$line]) {
-#        if($score[$line] == $points && !$points_drawn) {
-#            $sfont_white->use;
-#            $points_drawn = 1;
-#        }
-#        SDLx::SFont::print_text($app, 780 - SDLx::SFont::SDL_TEXTWIDTH( $score[$line] ), 60 + 25 * $line, $score[$line++] );
-#        $sfont_blue->use;
-#    }
+sub draw_highscore {
+	unless @highscore {
+		if !"$HOME/highscore.dat".IO.e && my $fh = open( "$HOME/highscore.dat", :w ) {
+			$fh.print( "42\n" );
+			$fh.close;
+		}
 
-#    if(open(FH, ">$HOME/highscore.dat")) {
-#        print(FH "$_\n") for @score;
-#        close(FH);
-#    }
-#}
+		@highscore = "$HOME/highscore.dat".IO.lines
+	}
+
+	my $line         = 0;
+	my @score        = (@highscore, $points).sort: { $^b <=> $^a };
+	my $points_drawn = 0;
+	while $line < 10 && @score[$line] {
+		if @score[$line] == $points && !$points_drawn {
+			$sfont_white.blit_text( $app, 780 - $sfont_white.text_width( @score[$line] ), 60 + 25 * $line, @score[$line++] );
+			$points_drawn = 1;
+		}
+		else {
+			$sfont_blue.blit_text( $app, 780 - $sfont_blue.text_width( @score[$line] ), 60 + 25 * $line, @score[$line++] );
+		}
+	}
+
+	if my $fh = open( "$HOME/highscore.dat", :w ) {
+		$fh.print( "$_\n" ) for @score;
+		$fh.close;
+	}
+}
 
 sub remove_selection ( $n ) {
 	my $count = 0;
@@ -207,7 +198,7 @@ sub remove_selection ( $n ) {
 
 	return unless $count;
 
-	#$points += int(5 * $count + 1.5**$count);
+	$points += (5 * $count + 1.5**$count).Int;
 	
 	my $removed = False;
 
@@ -216,9 +207,7 @@ sub remove_selection ( $n ) {
 			my $y = 11 - $_;
 			unless %balls{$x}{$y}.defined {
 				my $above = $y - 1;
-				while !%balls{$x}{$above}.defined && $above > 0 {
-					$above--;
-				}
+				$above--while !%balls{$x}{$above}.defined && $above > 0;
 
 				%balls{$x}{$y}     = %balls{$x}{$above};
 				%balls{$x}{$above} = Int;
@@ -231,9 +220,7 @@ sub remove_selection ( $n ) {
 		my $x = 7 - $_x;
 		unless %balls{$x}{11}.defined {
 			my $left = $x - 1;
-			while !%balls{$left}{11}.defined && $left > 0 {
-				$left--;
-			}
+			$left-- while !%balls{$left}{11}.defined && $left > 0;
 
 			for 0..11 {
 				my $y = 11 - $_;
@@ -247,9 +234,7 @@ sub remove_selection ( $n ) {
 	for 7..14 -> $x {
 		unless %balls{$x}{11}.defined {
 			my $right = $x + 1;
-			while !%balls{$right}{11}.defined && $right < 14 {
-				$right++;
-			}
+			$right++ while !%balls{$right}{11}.defined && $right < 14;
 
 			for 0..11 {
 				my $y = 11 - $_;
@@ -312,8 +297,8 @@ sub neighbours ( $x, $y, $n ) {
 	}
 }
 
-if ($videodriver) {
-    %*ENV{'SDL_VIDEODRIVER'} = $videodriver;
+if $videodriver {
+	%*ENV{'SDL_VIDEODRIVER'} = $videodriver;
 } else {
-    %*ENV{'SDL_VIDEODRIVER'} = Str;
+	%*ENV{'SDL_VIDEODRIVER'} = Str;
 }

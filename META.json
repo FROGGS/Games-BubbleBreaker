@@ -4,7 +4,7 @@
       "Tobias Leich <froggs@cpan.org>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.110930",
+   "generated_by" : "Module::Build version 0.4001, CPAN::Meta::Converter version 2.110440",
    "license" : [
       "perl_5"
    ],
@@ -26,6 +26,7 @@
       },
       "runtime" : {
          "requires" : {
+            "File::HomeDir" : 0,
             "File::ShareDir" : "1.00",
             "File::Spec" : 0,
             "SDL" : "2.532",
@@ -36,7 +37,7 @@
    "provides" : {
       "Games::BubbleBreaker" : {
          "file" : "lib/Games/BubbleBreaker.pm",
-         "version" : "0.02"
+         "version" : "0.03"
       }
    },
    "release_status" : "stable",
@@ -48,5 +49,5 @@
          "url" : "http://github.com/FROGGS/Games-BubbleBreaker"
       }
    },
-   "version" : "0.02"
+   "version" : "0.03"
 }

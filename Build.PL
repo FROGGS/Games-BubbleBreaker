@@ -9,6 +9,7 @@ my $build = Module::Build->new(
   license              => 'perl',
   requires             => {
     'File::ShareDir'   => '0',
+    'File::HomeDir'    => '0',
     'File::Spec'       => '0',
     'Time::HiRes'      => '0',
     'SDL'              => '2.532',

@@ -5,6 +5,7 @@ use warnings;
 
 use Time::HiRes;
 use File::ShareDir qw(dist_dir);
+use File::HomeDir;
 use File::Spec::Functions qw(splitpath catpath catdir catfile);
 
 use SDL;
@@ -43,9 +44,7 @@ my $app                  = SDLx::App->new( width => 800, height => 352,
                                            depth => 32, title => "BubbleBreaker", color => 0x000000FF,
                                            flags => SDL_SWSURFACE|SDL_DOUBLEBUF|SDL_NOFRAME,
                                            init => 0, eoq => 1, delay => 20 );
-my $HOME                 = $^O eq 'MSWin32'
-                         ? catpath($ENV{HOMEDRIVE}, catdir($ENV{HOMEPATH}, '.bubble-breaker'))
-                         : "$ENV{HOME}/.bubble-breaker";
+my $HOME                 = File::HomeDir->my_home . "/.bubble-breaker";
 mkdir($HOME) unless -d $HOME;
 my ($v, $p, $f)          = splitpath(__FILE__);
 my $SHARE                = -e catpath($v, catdir($p, '..', 'share'), 'background.png')

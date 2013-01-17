@@ -21,7 +21,7 @@ use SDLx::SFont;
 
 print STDOUT <<OUT;
 **************************** Information **********************************
-Click on a bubble to select all contiguous buubles of same color and double
+Click on a bubble to select all contiguous bubbles of same color and double
 click to destroy them. The more bubbles you destroy at once the more points
 you get.
 
